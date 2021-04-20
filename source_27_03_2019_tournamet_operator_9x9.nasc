@@ -1,0 +1,782 @@
+class 1 tournament_operator: default_npc
+{
+parameter:
+	int	GM_ID = 99; //72-99 and 150 for TournamentStateID
+	int	TournamentStateID=150;
+	int	TournamentState=1;
+	
+	int	FirstPlayer9x9High = 98;
+	int	SecondPlayer9x9High = 97;
+	
+	int	FirstPlayer9x9 = 96;
+	int	SecondPlayer9x9 = 95;
+	
+	int	FirstPlayer1x1High = 94;
+	int	SecondPlayer1x1High = 93;
+	
+	int	FirstPlayer1x1 = 92;
+	int	SecondPlayer1x1 = 91;
+	
+	int	FirstPlayer = 90;
+	int	SecondPlayer = 89;
+	
+	int	PlayerArray=72;
+		
+	int	TimerID=1001;
+	int	MemoID = 700;
+	int	TimerPrecisionSec=5;
+	
+	int	RegistrationTimeX = 6;//6*TimerPrecisionSec
+	int	HangupTimerX = 100; //100*TimerPrecisionSec
+	
+	int	CompetitionTime9x9High = 36;
+	int	CompetitionTime9x9 = 36;
+	int	CompetitionTime1x1High = 24;
+	int	CompetitionTime1x1 = 24;
+	
+	int	RegistrationState = 1;
+	int	StandByState = 2;
+	int	CompetitionTimeState9x9High = 3;
+	int	CompetitionTimeState9x9 = 4;
+	int	CompetitionTimeState1x1High = 5;
+	int	CompetitionTimeState1x1 = 6;
+	
+	int	FirstPlayerWinState=1;
+	int	FirstPlayerWinSecondInGameState=2;
+	int	SecondPlayerWinState=3;
+	int	SecondPlayerWinFirstInGameState=4;
+	int	DrawState=5;
+	int	FirstPlayerPartyOKState=6;
+	int	SecondPlayerPartyOKState=7;
+	int	AllPartyOKState=8;
+	
+	int	PartyReadyToTeleport=1;
+	
+	int	NormalBet1x1=5000;
+	int	HighBet1x1=50000;
+	int	NormalBet9x9=50000;
+	int	HighBet9x9=500000;
+	float	FeeRate=1.8;
+	int	MinPartyCount=2;
+	int	Arena=22;
+	int	Arena1x1=21;
+	
+	int	cmdCompetitionStart=1;
+	int	cmdRegistrationEnd=2;
+	int	cmdCompetitionStartLess=3;
+	int	cmdNoCompetitors=4;
+	int	cmdArenaCancelAll=5;
+	int	cmdArenaRoot=6;
+	int	cmdArenaCancelBuff=7;
+	int	cmdTeleportToRuneMP=8;
+	int	cmdNameAndOccupation=9;
+	
+	int	Buff9x9State = 1;
+	int	Buff1x1State = 2;
+	
+	int	MaxMM=2;
+	
+	int	T1pointX = 180008;  //
+	int	T1pointY = 110760;
+	int	T1pointZ = -2920;
+	
+	int	T2pointX = 180008;  //
+	int	T2pointY = 114504;
+	int	T2pointZ = -2920;
+	
+	int	ArenaLX = 179864;  
+	int	ArenaRX = 181272;
+	
+	int	ArenaTY = 110616;  
+	int	ArenaBY = 114648;
+	
+	int	RpointX = 44133;  //44133, -48071, -792
+	int	RpointY = -48071;
+	int	RpointZ = -792;
+
+handler:
+
+EventHandler CREATED()
+{
+myself.i_ai0=RegistrationState;
+myself.i_ai1 =0;
+myself::AddTimerEx(TimerID,  10*1000);
+}
+
+EventHandler MENU_SELECTED( talker , ask , reply , c0 , i0 , i1 , i2 , i3 , i4 , i5 , i6 , i7 , i8 , party0 , fhtml0)
+{
+	if( ask == -101 )
+	{
+		if(myself::HaveMemo( talker, MemoID ) == 1)
+		{
+			myself::Say("You are already registered in the Olympiad."); //myself::ShowSystemMessage( talker,  ?);
+			myself::ShowPage( talker, "tournament_operator006.htm" ); //You are already registered in the Olympiad.
+			return;
+		}
+		
+		switch(reply)
+		{
+			case 3: //9x9
+			{
+				i0=myself::GetGlobalMap(FirstPlayer9x9);
+				i1=myself::GetGlobalMap(SecondPlayer9x9);
+					
+				if(myself::GetIndexFromCreature(talker) == i0 || myself::GetIndexFromCreature(talker) == i1)
+				{
+					myself::Say("Youre already registered"); //myself::ShowSystemMessage( talker,  ?);
+					myself::ShowPage( talker, "tournament_operator010.htm" ); 
+				}
+				else if(myself::Party_GetCount(talker) < MinPartyCount)
+				{
+					myself::Say("Too few members in youre party"); //myself::ShowSystemMessage( talker,  ?);
+					myself::ShowPage( talker, "tournament_operator009.htm" ); 
+				}
+				/*else if( myself::Party_GetLeader( talker ) != talker)
+				{
+					myself::Say("Only the party leader can register");
+				}*/
+				else if(i0 < 0)
+				{
+					if( myself::OwnItemCount( talker, @adena) < NormalBet9x9 )
+					{
+					myself::ShowPage( talker, "tournament_operator003.htm" ); //You do not have enough money to bet.
+					return;
+					}
+					myself::DeleteItem1( talker, @adena, NormalBet9x9);
+					myself::RegisterGlobalMap(FirstPlayer9x9, myself::GetIndexFromCreature(talker));
+					myself::ShowPage( talker, "tournament_operator007.htm" ); 
+				}
+				else if(i1 < 0)
+				{
+					if( myself::OwnItemCount( talker, @adena) < NormalBet9x9 )
+					{
+					myself::ShowPage( talker, "tournament_operator003.htm" ); //You do not have enough money to bet.
+					return;
+					}
+					myself::DeleteItem1( talker, @adena, NormalBet9x9);
+					myself::RegisterGlobalMap(SecondPlayer9x9, myself::GetIndexFromCreature(talker));
+					myself::ShowPage( talker, "tournament_operator007.htm" ); 
+				}
+				else
+				{
+					myself::Say("Two party already registered");
+					myself::ShowPage( talker, "tournament_operator004.htm" ); //Two players already registered
+				}
+				break;
+			}
+			
+			case 5: //Cancel registration
+			{
+				i0=myself::GetIndexFromCreature(talker);
+							
+				i5=myself::GetGlobalMap(FirstPlayer9x9);
+				i6=myself::GetGlobalMap(SecondPlayer9x9);
+								
+				if(i0 == i5) //9x9
+				{
+					myself::RegisterGlobalMap(FirstPlayer9x9, myself::GetGlobalMap(SecondPlayer9x9));
+					myself::RegisterGlobalMap(SecondPlayer9x9, -2);
+					if((myself::GetInventoryInfo( talker, 1 )-myself::GetInventoryInfo( talker, 0 ))>0)
+					{
+						myself::GiveItem1( talker, @adena, myself::FloatToInt(NormalBet9x9*FeeRate/2));
+					}
+					else
+					{
+						myself::ShowSystemMessage( talker, 129 );
+					}
+					myself::Say("You have successfully eliminated from the competition 9x9"); //myself::ShowSystemMessage( talker,  ?);
+					myself::ShowPage( talker, "tournament_operator005.htm" ); //You have successfully eliminated from the competition
+				}
+				if(i0 == i6) //9x9
+				{
+					myself::RegisterGlobalMap(SecondPlayer9x9, -2);
+					if((myself::GetInventoryInfo( talker, 1 )-myself::GetInventoryInfo( talker, 0 ))>0)
+					{
+						myself::GiveItem1( talker, @adena, myself::FloatToInt(NormalBet9x9*FeeRate/2));
+					}
+					else
+					{
+						myself::ShowSystemMessage( talker, 129 );
+					}
+					myself::Say("You have successfully eliminated from the competition 9x9"); //myself::ShowSystemMessage( talker,  ?);
+					myself::ShowPage( talker, "tournament_operator005.htm" ); //You have successfully eliminated from the competition
+				}
+				break;
+			}
+			case 6: //Observe
+			{
+				myself::ObserveOlympiad( talker, Arena );
+				break;
+			}
+			case 7://Show category
+			{
+				myself::FHTML_SetFileName( fhtml0, "tournament_operator002.htm" );
+				myself::FHTML_SetInt( fhtml0, "NormalBet1x1", NormalBet1x1);
+				myself::FHTML_SetInt( fhtml0, "HighBet1x1", HighBet1x1);
+				myself::FHTML_SetInt( fhtml0, "NormalBet9x9", NormalBet9x9);
+				myself::FHTML_SetInt( fhtml0, "HighBet9x9", HighBet9x9);
+				myself::ShowFHTML( talker, fhtml0 );
+			}
+		}
+	}
+	else if( ask == -102 )
+	{
+		switch(reply)
+		{
+			case 0:
+			{
+			myself::Say("Console command 0");
+			myself::Say("1: Set Tournament mode");
+			myself::Say("2: Set normal mode");
+			myself::Say("Command help: there is nothing, some staff");
+			break;
+			}
+			case 1:
+			{
+				myself::Say("Console command 1");	
+				myself::RegisterGlobalMap(TournamentStateID, TournamentState);
+				myself::Say("Tournament mode is on");
+				break;
+			}
+			case 2:
+			{
+				myself::Say("Console command 2");	
+				myself::UnregisterGlobalMap(TournamentStateID);
+				myself::Say("Tournament mode is off");
+				break;
+			}
+			case 3:
+			{
+				myself::AddUseSkillDesire( talker, @s_seal_of_disease1, @ST_HEAL, @AMT_STAND, 1000000 );
+				break;
+			}
+			case 4:
+			{
+				party0 = myself::GetParty( talker );
+				if( myself::IsNullParty( party0 ) )
+				{
+					return;
+				}
+				myself::TeleportParty( party0.id, myself::FloatToInt( myself.sm.x ), myself::FloatToInt( myself.sm.y+100 ), myself::FloatToInt( myself.sm.z ), 3000, 0 );
+				break;
+			}
+			case 5:
+			{
+				i0=myself::Party_GetCount(talker);
+				myself::Say("Party_GetCount= "+myself::Party_GetCount(talker));
+				c0=myself::Party_GetCreature( talker, 9 );
+				myself::Say("Name= "+ c0.name);
+				break;
+			}
+			case 6:
+			{
+				i0=myself::GetInventoryInfo( talker, 1 ) - myself::GetInventoryInfo( talker, 0 );
+				myself::Say("Number of free slots = "+ i0);
+				break;
+			}
+			case 7:
+			{
+				myself::AddUseSkillDesire( talker, @s_npc_cancel11, @ST_ATTACK, @AMT_STAND, 1000000 );
+				break;
+			}
+			case 8:
+			{
+				myself::Say("WW abnormal Level="+myself::GetAbnormalLevel( talker, myself::Skill_GetAbnormalType( @s_wind_walk2 ) ) );
+				break;
+			}
+			case 9:
+			{
+				
+				break;
+			}
+		}
+	}
+}
+
+
+EventHandler TALKED(talker)
+{
+	if(talker.builder_level == 0)
+	{
+		if (  myself::GetGlobalMap(TournamentStateID) != TournamentState )
+		{
+			myself::ShowPage( talker, "tournament_operator001.htm" );
+		}
+		else
+		{
+			if (myself::OwnItemCount( talker, @_zahak_fluids) == 0)
+			{
+				myself::Say("Sorry, enabled tournament mode and you have not required item for participation"); //look and make htm
+			}
+			else
+			{
+				myself::ShowPage( talker, "tournament_operator001.htm" ); //look and strip 1x1 mode in htm
+			}
+		}
+	}
+	else
+	{
+		myself::ShowPage( talker, "tournament_operator001dev.htm" ); //
+	}
+}
+/*
+	int	FirstPlayer9x9High = 98;
+	int	SecondPlayer9x9High = 97;
+	
+	int	FirstPlayer9x9 = 96;
+	int	SecondPlayer9x9 = 95;
+	
+	int	FirstPlayer1x1High = 94;
+	int	SecondPlayer1x1High = 93;
+	
+	int	FirstPlayer1x1 = 92;
+	int	SecondPlayer1x1 = 91;
+*/
+EventHandler TIMER_FIRED_EX(timer_id, i0 , i1 , i2 ,  i3 , i4 , c0 , c1 , c2, c3,  party0 , party1)
+{
+	if(timer_id == TimerID)
+	{
+		//myself::Say("Timer counted and State= "+myself.i_ai0);
+		
+		switch(myself.i_ai0)
+		{
+			case 1: //RegistrationState
+			{
+				if(myself::GetGlobalMap(FirstPlayer9x9) > 0 && myself::GetGlobalMap(SecondPlayer9x9) > 0)
+				{
+					i0=myself::GetGlobalMap(FirstPlayer9x9);
+					i1=myself::GetGlobalMap(SecondPlayer9x9);
+					
+					if(myself::GetCreatureFromIndex(i0)&&myself::GetCreatureFromIndex(i1))
+					{
+						c0=myself::GetCreatureFromIndex(i0);
+						c1=myself::GetCreatureFromIndex(i1);
+						
+						myself::Shout("myself::GetCreatureFromIndex(i0)&&myself::GetCreatureFromIndex(i1)");
+						
+						party0=myself::GetParty(c0);
+						party1=myself::GetParty(c1);
+						
+						if(myself::IsNullParty(party0) || myself::Party_GetCount(c0) < MinPartyCount)
+						{
+							myself::Shout("Winner(technical) is "+c1.name);
+							if((myself::GetInventoryInfo( c1, 1 )-myself::GetInventoryInfo( c1, 0 ))>0)
+							{
+								myself::GiveItem1( c1, @adena, myself::FloatToInt(NormalBet9x9*FeeRate));
+							}
+							else
+							{
+								myself::ShowSystemMessage( c1, 129 );
+							}
+						}
+						else if(myself::IsNullParty(party1) || myself::Party_GetCount(c1) < MinPartyCount)
+						{
+							myself::Shout("Winner(technical) is "+c0.name);
+							if((myself::GetInventoryInfo( c0, 1 )-myself::GetInventoryInfo( c0, 0 ))>0)
+							{
+								myself::GiveItem1( c0, @adena, myself::FloatToInt(NormalBet9x9*FeeRate));
+							}
+						}
+						else
+						{
+							myself::Shout("Competition 9x9N started");
+							
+							i3=0;
+							i4=0;
+							for(i2=0; i2 < 9; i2=i2+1)
+							{
+								if(myself::IsNullCreature(myself::Party_GetCreature( c0, i2 )) == 0)
+								{
+									
+									c2=myself::Party_GetCreature( c0, i2 );
+									if(c2.occupation == 103 /*MM*/)
+									{
+										myself::Say("Mystic Muse here -> "+c2.name);
+										i3=i3+1;
+										if(i3>MaxMM)
+										{
+											i4=1;
+											myself::Say("Too many Mystic Muse here -> "+c2.name);
+										}//!! Rank of PL
+									}
+									if(c2.alive == 1 &&/* myself::GetAbnormalLevel( c2, myself::Skill_GetAbnormalType( @s_dance_of_shadow1 ) ) <= 0 && */i4 == 0)
+									{
+										myself::RegisterGlobalMap( PlayerArray+i2, myself::GetIndexFromCreature(c2));
+										myself::InstantTeleport( c2, -68700, -209736, -3328); //Olympiad Stadium, arena 22
+									}
+									else if(i4>0)
+									{
+										myself::Say("Too many Mystic Muse in youre party "+c2.name);
+										myself::RegisterGlobalMap( PlayerArray+i2, -2);
+									}
+									else
+									{
+										myself::Say("You must be alive "+c2.name);
+										myself::RegisterGlobalMap( PlayerArray+i2, -2);
+									}
+									
+								}
+								else
+								{
+									myself::RegisterGlobalMap( PlayerArray+i2, -2);
+								}
+							}	
+							
+							i3=0;
+							i4=0;
+							i5=0;
+							for(i2=0; i2 < 9; i2=i2+1)
+							{
+								if(myself::IsNullCreature(myself::Party_GetCreature( c1, i2 )) == 0)
+								{
+									c3=myself::Party_GetCreature( c1, i2 );
+									if(c3.occupation == 103 /*MM*/)
+									{
+										myself::Say("Mystic Muse here -> "+c3.name);
+										i3=i3+1;
+										if(i3>MaxMM)
+										{
+											i4=1;
+											myself::Say("Too Mystic Muse here -> "+c3.name);
+										}
+									}//!! Shout name and occupation//!! Rank of PL
+									if(c3.alive == 1 && /*myself::GetAbnormalLevel( c3, myself::Skill_GetAbnormalType( @s_dance_of_shadow1 ) ) <= 0 &&*/ i4 == 0)
+									{
+										myself::RegisterGlobalMap( PlayerArray+9+i2, myself::GetIndexFromCreature(c3));
+										myself::InstantTeleport( c3, -70740, -208342, -3328); //Olympiad Stadium, arena 22
+									}
+									else if(i4>0)
+									{
+										myself::Say("Too many Mystic Muse in youre party "+c3.name);
+										myself::RegisterGlobalMap( PlayerArray+9+i2, -2);
+									}
+									else
+									{
+										myself::Say("You must be alive "+c3.name);
+										myself::RegisterGlobalMap( PlayerArray+9+i2, -2);
+									}
+								}
+								else
+								{
+									myself::RegisterGlobalMap( PlayerArray+9+i2, -2);
+								}
+							}
+						
+							//myself::TeleportParty( party0.id, -68700, -209736, -3328 , 300, 0 ); //Olympiad Stadium, arena 22 !!
+							myself::CreateOnePrivateEx( 1014011, "tournament_dummy", 0, 0, -68720, -209756, -3328, 0, 0, Buff9x9State, 30);
+							//myself::TeleportParty( party1.id, -70740, -208342, -3328 , 300, 0 ); //Olympiad Stadium, arena 22 !!
+							myself::CreateOnePrivateEx( 1014011, "tournament_dummy", 0, 0, -70740+20, -208342+20, -3328, 0, 0, Buff9x9State, 30);
+							
+							myself::RegisterGlobalMap(FirstPlayer, i0);
+							myself::RegisterGlobalMap(SecondPlayer, i1);
+						
+							myself.i_ai0=CompetitionTimeState9x9;
+							myself.i_ai1=0;
+						}
+						
+						
+					}
+					else if(myself::GetCreatureFromIndex(i0))
+					{
+						c0=myself::GetCreatureFromIndex(i0);
+						myself::Shout("Winner(PL logout) is "+c0.name);
+						if((myself::GetInventoryInfo( c0, 1 )-myself::GetInventoryInfo( c0, 0 ))>0)
+						{
+							myself::GiveItem1( c0, @adena, myself::FloatToInt(NormalBet9x9*FeeRate));
+						}
+						else
+						{
+							myself::ShowSystemMessage( c0, 129 );
+						}
+					}
+					else if(myself::GetCreatureFromIndex(i1))
+					{
+						c1=myself::GetCreatureFromIndex(i1);
+						myself::Shout("Winner(PL logout) is "+c1.name);
+						if((myself::GetInventoryInfo( c1, 1 )-myself::GetInventoryInfo( c1, 0 ))>0)
+						{
+							myself::GiveItem1( c1, @adena, myself::FloatToInt(NormalBet9x9*FeeRate));
+						}
+						else
+						{
+							myself::ShowSystemMessage( c1, 129 );
+						}
+					}
+				
+					myself::RegisterGlobalMap(FirstPlayer9x9, -2);
+					myself::RegisterGlobalMap(SecondPlayer9x9, -2);
+					
+					myself::AddTimerEx(TimerID,  TimerPrecisionSec*1000);
+					break;
+				}
+				
+			}
+			
+			case 2: //StandbyState
+			{
+				
+				break;
+			}
+			
+						
+			case 4: //CompetitionTimeState9x9
+			{
+				myself.i_ai2=0;
+				myself.i_ai3=0; 
+				myself.i_ai1 = myself.i_ai1+1;
+								
+				i0=myself::GetGlobalMap(FirstPlayer);
+				i1=myself::GetGlobalMap(SecondPlayer);
+					
+				if(myself::GetCreatureFromIndex(i0)&&myself::GetCreatureFromIndex(i1))
+				{
+
+					c0=myself::GetCreatureFromIndex(i0);
+					c1=myself::GetCreatureFromIndex(i1);
+					myself::Say("Party_GetCount"+myself::Party_GetCount(c0));
+					myself::Say("Party_GetCount"+myself::Party_GetCount(c1));
+					
+					for(i2=0; i2 < 9; i2=i2+1)
+					{
+						if(myself::IsNullCreature(myself::Party_GetCreature( c1, i2 )) == 0)
+						{
+							c2 = myself::Party_GetCreature( c1, i2 );
+							myself::Say("Creature is OK="+i2);
+							if(c2.y > -200700 || c2.y < -210500 || c2.alive != 1)//c0.x < ArenaLX || c0.x > ArenaRX || c0.y < ArenaTY || c0.y > ArenaBY ||
+							{
+							}
+							else 	
+							{
+								myself::Say("Member is OK="+i2);
+								myself.i_ai2=SecondPlayerPartyOKState; 
+							}
+						}
+					}
+					for(i2=0; i2 < 9; i2=i2+1)
+					{
+						if(myself::IsNullCreature(myself::Party_GetCreature( c0, i2 )) == 0)
+						{
+							c2 = myself::Party_GetCreature( c0, i2 );
+							myself::Say("Creature is OK="+i2);
+							if(c2.y > -200700 || c2.y < -210500 || c2.alive != 1)//c0.x < ArenaLX || c0.x > ArenaRX || c0.y < ArenaTY || c0.y > ArenaBY ||
+							{
+							}
+							else 	
+							{
+								myself::Say("Member is OK="+i2);
+								myself.i_ai3=FirstPlayerPartyOKState; 
+							}
+						}
+					}
+					
+					if(myself.i_ai2 != SecondPlayerPartyOKState)
+					{
+						myself.i_ai2=FirstPlayerWinState;//first win
+					}
+					else if(myself.i_ai3 != FirstPlayerPartyOKState)
+					{
+						myself.i_ai2=SecondPlayerWinState; //second win
+					}
+					else if(myself.i_ai1 > CompetitionTime9x9)
+					{
+						myself.i_ai2=DrawState; //draw
+					}
+				}
+				else if(myself::GetCreatureFromIndex(i0))
+				{
+					myself.i_ai2=FirstPlayerWinState;
+					c0=myself::GetCreatureFromIndex(i0);
+					myself::Say("Logout i0");
+				}
+				else if(myself::GetCreatureFromIndex(i1))
+				{
+					myself.i_ai2=SecondPlayerWinState;
+					c1=myself::GetCreatureFromIndex(i1);
+					myself::Say("Logout i1");
+				}
+				
+				if(myself.i_ai2 == SecondPlayerWinState || myself.i_ai2 == FirstPlayerWinState || myself.i_ai2 == DrawState)
+				{
+					if(myself.i_ai2 == FirstPlayerWinState)
+					{
+						myself::Say("Winner is "+c0.name);
+						if((myself::GetInventoryInfo( c0, 1 )-myself::GetInventoryInfo( c0, 0 ))>1)
+						{
+							myself::GiveItem1( c0, @adena, myself::FloatToInt(NormalBet9x9*FeeRate));
+							myself::GiveItem1( c0, 8089, 9); //proof_of_challenger !!
+						}
+						else
+						{
+							myself::ShowSystemMessage( c0, 129 );
+						}
+					}
+					else if(myself.i_ai2 == SecondPlayerWinState)
+					{
+						myself::Say("Winner is "+c1.name);
+						if((myself::GetInventoryInfo( c1, 1 )-myself::GetInventoryInfo( c1, 0 ))>1)
+						{
+							myself::GiveItem1( c1, @adena, myself::FloatToInt(NormalBet9x9*FeeRate));
+							myself::GiveItem1( c1, 8089, 9); //proof_of_challenger !!
+						}
+						else
+						{
+							myself::ShowSystemMessage( c1, 129 );
+						}
+					}
+					else if(myself.i_ai2 == DrawState)
+					{
+						myself::Say("The competition ended with a draw");
+						
+						if((myself::GetInventoryInfo( c0, 1 )-myself::GetInventoryInfo( c0, 0 ))>0)
+						{
+							myself::GiveItem1( c0, @adena, myself::FloatToInt(NormalBet9x9*FeeRate/2));
+						}
+						else
+						{
+							myself::ShowSystemMessage( c0, 129 );
+						}
+						if((myself::GetInventoryInfo( c1, 1 )-myself::GetInventoryInfo( c1, 0 ))>0)
+						{
+							myself::GiveItem1( c1, @adena, myself::FloatToInt(NormalBet9x9*FeeRate/2));
+						}
+						else
+						{
+							myself::ShowSystemMessage( c1, 129 );
+						}
+					}
+					
+					for(i2=0; i2 < 9; i2=i2+1)
+					{
+						i3=myself::GetGlobalMap(PlayerArray+i2);
+						if(i3 > 0)
+						{
+							if(myself::GetCreatureFromIndex(i3))
+							{//c0.x < ArenaLX || c0.x > ArenaRX || c0.y < ArenaTY || c0.y > ArenaBY || !!
+								myself::InstantTeleport(myself::GetCreatureFromIndex(i3), RpointX, RpointY, RpointZ );//R-point
+							}
+						}
+					}
+					for(i2=0; i2 < 9; i2=i2+1)
+					{
+						i3=myself::GetGlobalMap(PlayerArray+9+i2);
+						if(i3 > 0)
+						{
+							if(myself::GetCreatureFromIndex(i3))
+							{//c0.x < ArenaLX || c0.x > ArenaRX || c0.y < ArenaTY || c0.y > ArenaBY || !!
+								myself::InstantTeleport(myself::GetCreatureFromIndex(i3), RpointX, RpointY, RpointZ );//R-point
+							}
+						}
+					}
+					
+					myself.i_ai1 =0;
+					myself.i_ai2 =0;
+					myself.i_ai0=RegistrationState;
+				}
+				
+				myself::AddTimerEx(TimerID,  TimerPrecisionSec*1000);
+				break;
+			}
+			
+				
+		}	
+	}		
+}
+}
+
+class 1 tournament_dummy: default_npc
+{
+parameter:
+	int	TimerID=1001;
+	int	TimerCheckID=1003;
+	int	TimerGoodbyeID=1004;
+	int	CheckTime=8;
+	int	Buff9x9State = 1;
+	int	Buff1x1State = 2;
+	int	Buff1x1StrongState = 3;
+	
+	int	RpointX = 44133;  //44133, -48071, -792 !!
+	int	RpointY = -48071; 
+	int	RpointZ = -792;
+	
+handler:
+
+EventHandler CREATED()
+{	
+	myself::Say("Handler CREATED is work");
+	myself.i_ai0=myself.sm.param2;
+	//myself::AddTimerEx(TimerCheckID, myself::FloatToInt( CheckTime*1000 ));
+	myself::AddTimerEx(TimerID, myself::FloatToInt( myself.sm.param3*1000 ));
+	myself::AddTimerEx(TimerGoodbyeID, myself::FloatToInt( (myself.sm.param3-1)*1000 ));
+	//myself::AddTimerEx(TimerID, myself::FloatToInt( 600*1000 ));
+	//myself.i_ai0=Buff1x1State;
+}
+
+EventHandler TALKED(talker, i0)
+{
+	if(myself.i_ai0 == Buff9x9State)
+	{
+		myself::ShowPage( talker, "tournament_dummy002.htm" );
+		
+		if( myself::Party_GetLeader( talker ) == talker )//!!
+		{
+			i0=myself::OwnItemCount( talker, 8089); //proof_of_challenger
+			myself::Shout("Party leader "+talker.name+" Rating "+i0);
+		};
+		
+	}
+}
+
+EventHandler MENU_SELECTED(talker,ask,reply,i0,i1, c0)
+{
+		if( ask == -101 )
+		{
+			myself::AddUseSkillDesire( talker, reply, @ST_HEAL, @AMT_STAND, 1000000 );
+			
+			if(myself.i_ai0 == Buff1x1State && (talker.occupation == 95 /*ST*/|| talker.occupation == 103 /*MM*/|| talker.occupation == 113 /*Ti*/|| talker.occupation == 110 /*SS*/|| talker.occupation == 94 /*AM*/))
+			{
+				myself::ShowPage( talker, "tournament_dummy004.htm" );
+			}
+			else if(myself.i_ai0 == Buff1x1State)
+			{
+				myself::ShowPage( talker, "tournament_dummy001.htm" );
+			}
+			else if(myself.i_ai0 == Buff9x9State)
+			{
+				myself::ShowPage( talker, "tournament_dummy002.htm" );
+			}
+		}
+}
+EventHandler TIMER_FIRED_EX( timer_id, i0 , c0 )
+{
+	if(timer_id == TimerID)
+	{
+		myself::Despawn();
+	}
+	else if(timer_id == TimerGoodbyeID)
+	{
+		myself::Say("À good day to die!");
+	}
+
+}
+/*EventHandler SEE_CREATURE(creature)
+{
+	if( creature.is_pc == 1)
+	{
+		if(myself.i_ai0 == Buff1x1State)
+		{
+			myself::AddUseSkillDesire( creature, s_seal_of_tournament_1, @ST_ATTACK, @AMT_STAND, 1000000 );
+		}
+		else if(myself.i_ai0 == Buff9x9State)
+		{
+			myself::AddUseSkillDesire( creature, s_seal_of_tournament_2, @ST_ATTACK, @AMT_STAND, 1000000 );
+		}
+	}
+}*/
+EventHandler USE_SKILL_FINISHED(target,skill_name_id,i0,party0)
+	{
+		i0=myself::GetIndexFromCreature(target);
+		myself::InstantTeleport( target,  T1pointX, T1pointY, T1pointZ );//T1-point !! if(skill_name_id==?)
+		myself::AddTimerEx(TimerID,  myself::FloatToInt((BuffTime+10)*1000));
+		
+	}
+}
